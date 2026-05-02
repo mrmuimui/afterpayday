@@ -10,3 +10,10 @@ body {
   background: #0a0a0a;
   overflow-x: hidden;
 }
+
+/* Prevent iOS auto-zoom on input focus (triggers when font-size < 16px) */
+input,
+select,
+textarea {
+  font-size: 16px;
+}

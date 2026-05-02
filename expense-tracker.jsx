@@ -253,7 +253,7 @@ export default function App() {
 
   return (
     <div className="min-h-dvh bg-neutral-950 text-neutral-100 antialiased overflow-x-hidden" style={{ fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" }}>
-      <div className="max-w-md mx-auto" style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom))' }}>
+      <div className="max-w-md mx-auto pb-24">
         {/* Header */}
         <header className="px-5 pb-4 flex items-center justify-between" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}>
           <div className="flex items-center gap-2">
@@ -316,7 +316,7 @@ export default function App() {
         )}
 
         {/* Tab bar */}
-        <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-neutral-900 bg-neutral-950/90 backdrop-blur" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-neutral-900 bg-neutral-950 backdrop-blur">
           <div className="max-w-md mx-auto grid grid-cols-2">
             <TabButton active={tab === "dashboard"} onClick={() => setTab("dashboard")} icon={LayoutDashboard} label="Dashboard" />
             <TabButton active={tab === "commitments"} onClick={() => setTab("commitments")} icon={ListChecks} label="Commitments" />
