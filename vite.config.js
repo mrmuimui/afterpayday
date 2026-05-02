@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon-192.png', 'icon-512.png', 'icon-maskable-512.png'],
       manifest: {
-        name: 'Expense Tracker',
-        short_name: 'Expenses',
+        name: 'AfterPayday',
+        short_name: 'AfterPayday',
         description: 'Track your monthly expenses, debt, and income.',
         theme_color: '#10b981',
         background_color: '#0a0a0a',

@@ -252,16 +252,16 @@ export default function App() {
     }));
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 antialiased" style={{ fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" }}>
-      <div className="max-w-md mx-auto pb-28">
+    <div className="min-h-dvh bg-neutral-950 text-neutral-100 antialiased overflow-x-hidden" style={{ fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" }}>
+      <div className="max-w-md mx-auto" style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom))' }}>
         {/* Header */}
-        <header className="px-5 pt-6 pb-4 flex items-center justify-between">
+        <header className="px-5 pb-4 flex items-center justify-between" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center overflow-hidden">
               <img src="/app-icon.png" alt="App Icon" className="w-full h-full object-cover" />
             </div>
             <div>
-              <div className="text-[11px] uppercase tracking-widest text-neutral-500">Tracker</div>
+              <div className="text-[11px] uppercase tracking-widest text-neutral-500">AfterPayday</div>
               <div className="text-sm font-medium text-neutral-200">{monthLabel()}</div>
             </div>
           </div>
@@ -316,7 +316,7 @@ export default function App() {
         )}
 
         {/* Tab bar */}
-        <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-neutral-900 bg-neutral-950/90 backdrop-blur">
+        <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-neutral-900 bg-neutral-950/90 backdrop-blur" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div className="max-w-md mx-auto grid grid-cols-2">
             <TabButton active={tab === "dashboard"} onClick={() => setTab("dashboard")} icon={LayoutDashboard} label="Dashboard" />
             <TabButton active={tab === "commitments"} onClick={() => setTab("commitments")} icon={ListChecks} label="Commitments" />

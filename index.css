@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+html {
+  background: #0a0a0a;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+body {
+  background: #0a0a0a;
+  overflow-x: hidden;
+}
