@@ -480,7 +480,7 @@ function QuickAddDaily({ currency, onAdd }) {
 
   const submit = () => {
     const a = parseFloat(amount);
-    if (!a || a <= 0) return;
+    if (!Number.isFinite(a) || a <= 0) return;
     onAdd(a, desc.trim());
     setAmount("");
     setDesc("");
@@ -572,7 +572,7 @@ function FixedExpensesSection({ currency, items, total, unpaidTotal, onAdd, onRe
 
   const submit = () => {
     const a = parseFloat(amount);
-    if (!name.trim() || !a || a <= 0) return;
+    if (!name.trim() || !Number.isFinite(a) || a <= 0) return;
     onAdd(name.trim(), a);
     setName("");
     setAmount("");
@@ -756,7 +756,11 @@ function NewDebtGroupForm({ currency, onCancel, onCreate }) {
     if (mode === "auto") {
       const t = parseFloat(total);
       const n = parseInt(months, 10);
-      if (!t || !n || t <= 0 || n <= 0) return;
+      if (!Number.isFinite(t) || t <= 0 || !Number.isFinite(n) || n <= 0) return;
+      if (n > 600) {
+        alert("Maximum allowed duration is 600 months (50 years).");
+        return;
+      }
       const per = +(t / n).toFixed(2);
       const [yy, mm, dd] = startDate.split("-").map(Number);
       const installments = Array.from({ length: n }, (_, i) => {
@@ -1370,7 +1374,7 @@ function ManualInstallmentForm({ currency, onCancel, onAdd }) {
 
   const submit = () => {
     const a = parseFloat(amount);
-    if (!label.trim() || !a || a <= 0 || !dueDate) return;
+    if (!label.trim() || !Number.isFinite(a) || a <= 0 || !dueDate) return;
     onAdd({ id: uid(), label: label.trim(), amount: a, dueDate, isPaid: false });
   };
 
