@@ -15,6 +15,12 @@ import {
   AlertTriangle,
   Calendar,
   History,
+  HelpCircle,
+  TrendingDown,
+  PlusCircle,
+  CheckCircle,
+  Receipt,
+  CreditCard,
 } from "lucide-react";
 
 // ---------- storage ----------
@@ -125,6 +131,175 @@ function SplashScreen({ onDone }) {
   );
 }
 
+// ---------- onboarding ----------
+const ONBOARDING_KEY = 'afterpayday-onboarding-done';
+
+const ONBOARDING_SLIDES = [
+  {
+    Icon: Wallet,
+    title: 'Welcome to AfterPayday',
+    body: 'Know exactly what you can spend after bills and commitments — every single day.',
+    color: '#10b981',
+  },
+  {
+    Icon: TrendingDown,
+    title: 'Your Safe to Spend',
+    body: 'We subtract your fixed expenses and daily spending from your salary. What\'s left is yours to spend freely.',
+    color: '#6366f1',
+  },
+  {
+    Icon: ListChecks,
+    title: 'Track Commitments',
+    body: 'Add recurring bills and installment debts under Commitments. Mark them paid each month.',
+    color: '#f59e0b',
+  },
+  {
+    Icon: PlusCircle,
+    title: 'Log Daily Expenses',
+    body: 'Tap the add area on the Dashboard to record what you spend today. Your Safe to Spend updates instantly.',
+    color: '#3b82f6',
+  },
+  {
+    Icon: CheckCircle,
+    title: "You're All Set",
+    body: 'Start by setting your monthly salary in Settings. AfterPayday will take care of the rest.',
+    color: '#10b981',
+  },
+];
+
+function OnboardingSlides({ onDone }) {
+  const [current, setCurrent] = useState(0);
+  const [visible, setVisible] = useState(false);
+  const touchStartX = useRef(null);
+  const total = ONBOARDING_SLIDES.length;
+  const isLast = current === total - 1;
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const handleDismiss = useCallback(() => {
+    localStorage.setItem(ONBOARDING_KEY, '1');
+    onDone();
+  }, [onDone]);
+
+  const handleNext = () => {
+    if (isLast) { handleDismiss(); return; }
+    setCurrent(c => c + 1);
+  };
+
+  const handlePrev = () => {
+    if (current > 0) setCurrent(c => c - 1);
+  };
+
+  const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const delta = touchStartX.current - e.changedTouches[0].clientX;
+    touchStartX.current = null;
+    if (delta > 50) handleNext();
+    else if (delta < -50) handlePrev();
+  };
+
+  const { Icon, title, body, color } = ONBOARDING_SLIDES[current];
+
+  return (
+    <div
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 200,
+        backgroundColor: '#0a0a0a',
+        display: 'flex', flexDirection: 'column',
+        fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 0.3s ease',
+        userSelect: 'none',
+      }}
+    >
+      {/* Skip */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: 'max(1.5rem, env(safe-area-inset-top)) 1.25rem 0' }}>
+        <button
+          onClick={handleDismiss}
+          style={{ color: '#737373', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}
+        >
+          Skip
+        </button>
+      </div>
+
+      {/* Slide content */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 2rem', gap: 28 }}>
+        <div style={{
+          width: 96, height: 96, borderRadius: 28,
+          backgroundColor: color + '18',
+          border: `1.5px solid ${color}30`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon size={44} style={{ color }} strokeWidth={1.5} />
+        </div>
+
+        <div style={{ textAlign: 'center', maxWidth: 280 }}>
+          <div style={{ color: '#f5f5f5', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 12 }}>
+            {title}
+          </div>
+          <div style={{ color: '#737373', fontSize: 15.5, lineHeight: 1.6 }}>
+            {body}
+          </div>
+        </div>
+      </div>
+
+      {/* Dots */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 6, paddingBottom: 24 }}>
+        {ONBOARDING_SLIDES.map((_, i) => (
+          <div
+            key={i}
+            onClick={() => setCurrent(i)}
+            style={{
+              width: i === current ? 20 : 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: i === current ? '#10b981' : '#404040',
+              transition: 'width 0.25s ease, background-color 0.25s ease',
+              cursor: 'pointer',
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Navigation buttons */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: `0 1.5rem max(1.5rem, env(safe-area-inset-bottom)) 1.5rem`,
+        paddingBottom: 'calc(max(1.5rem, env(safe-area-inset-bottom)) + 1rem)',
+      }}>
+        <button
+          onClick={handlePrev}
+          style={{
+            color: current === 0 ? 'transparent' : '#737373',
+            background: 'none', border: 'none', cursor: current === 0 ? 'default' : 'pointer',
+            fontSize: 14, padding: '8px 12px',
+            pointerEvents: current === 0 ? 'none' : 'auto',
+          }}
+        >
+          ← Back
+        </button>
+        <button
+          onClick={handleNext}
+          style={{
+            backgroundColor: '#10b981', color: '#fff',
+            border: 'none', borderRadius: 12, cursor: 'pointer',
+            fontSize: 15, fontWeight: 600, padding: '12px 28px',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {isLast ? 'Get Started' : 'Next →'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ---------- root ----------
 export default function App() {
   const [showSplash] = useState(() => {
@@ -137,6 +312,7 @@ export default function App() {
   const [tab, setTab] = useState("dashboard");
   const [showSettings, setShowSettings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
 
   useEffect(() => {
     saveState(state);
@@ -181,8 +357,11 @@ export default function App() {
     }
   }, [state.currentMonth, state.settings.salary, state.fixedExpenses, state.debtGroups, state.dailyExpenses]);
 
-  // Prompt for salary on very first run
+  // Prompt for salary on very first run (skip if onboarding is active — it will open settings on completion)
   useEffect(() => {
+    if (!localStorage.getItem(ONBOARDING_KEY) && state.settings.salary === 0 && state.fixedExpenses.length === 0 && state.debtGroups.length === 0 && state.dailyExpenses.length === 0) {
+      return; // new user: let onboarding run first
+    }
     if (state.settings.salary === 0 && state.fixedExpenses.length === 0 && state.debtGroups.length === 0 && state.dailyExpenses.length === 0) {
       setShowSettings(true);
     }
@@ -299,8 +478,16 @@ export default function App() {
       ),
     }));
 
+  const handleOnboardingDone = useCallback(() => {
+    setShowOnboarding(false);
+    if (state.settings.salary === 0 && state.fixedExpenses.length === 0 && state.debtGroups.length === 0 && state.dailyExpenses.length === 0) {
+      setShowSettings(true);
+    }
+  }, [state.settings.salary, state.fixedExpenses.length, state.debtGroups.length, state.dailyExpenses.length]);
+
   return (
     <>
+    {showOnboarding && <OnboardingSlides onDone={handleOnboardingDone} />}
     {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
     <div className="min-h-dvh bg-neutral-950 text-neutral-100 antialiased overflow-x-hidden" style={{ fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" }}>
       <div className="max-w-md mx-auto pb-24">
@@ -316,6 +503,13 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="w-9 h-9 rounded-lg border border-neutral-800 bg-neutral-900/50 flex items-center justify-center hover:bg-neutral-800 transition-colors"
+              aria-label="Help"
+            >
+              <HelpCircle size={16} className="text-neutral-400" />
+            </button>
             <button
               onClick={() => setShowHistory(true)}
               className="w-9 h-9 rounded-lg border border-neutral-800 bg-neutral-900/50 flex items-center justify-center hover:bg-neutral-800 transition-colors"
@@ -594,7 +788,7 @@ function Commitments({
   onRemoveInstallment,
 }) {
   return (
-    <div className="px-5 space-y-8">
+    <div className="px-5 pt-4 space-y-8">
       <FixedExpensesSection
         currency={currency}
         items={fixedExpenses}
@@ -637,11 +831,14 @@ function FixedExpensesSection({ currency, items, total, unpaidTotal, onAdd, onRe
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-medium text-neutral-300">Fixed Monthly Expenses</h2>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
+            <Receipt size={13} className="text-amber-400" />
+          </div>
+          <h2 className="text-base font-semibold text-neutral-200 tracking-tight">Fixed Monthly Expenses</h2>
           {totalCount > 0 && (
-            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-300 border border-neutral-700/50">
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-400 border border-neutral-700/50">
               {paidCount}/{totalCount}
             </span>
           )}
@@ -682,8 +879,9 @@ function FixedExpensesSection({ currency, items, total, unpaidTotal, onAdd, onRe
       )}
 
       {items.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-neutral-800 p-6 text-center text-sm text-neutral-500">
-          No fixed expenses yet.
+        <div className="rounded-xl border border-dashed border-neutral-800 p-6 text-center flex flex-col items-center gap-2">
+          <Receipt size={20} className="text-neutral-700" />
+          <span className="text-sm text-neutral-500">No fixed expenses yet.</span>
         </div>
       ) : (
         <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 overflow-hidden">
@@ -754,8 +952,13 @@ function DebtSection({ currency, groups, onAddGroup, onRemoveGroup, onToggle, on
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-medium text-neutral-300">Short-Term CR Debt</h2>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center flex-shrink-0">
+            <CreditCard size={13} className="text-rose-400" />
+          </div>
+          <h2 className="text-base font-semibold text-neutral-200 tracking-tight">Short-term Debts</h2>
+        </div>
         <button onClick={() => setCreating((v) => !v)} className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
           {creating ? <X size={14} /> : <Plus size={14} />}
           {creating ? "Cancel" : "New group"}
@@ -774,8 +977,9 @@ function DebtSection({ currency, groups, onAddGroup, onRemoveGroup, onToggle, on
       )}
 
       {groups.length === 0 && !creating ? (
-        <div className="rounded-xl border border-dashed border-neutral-800 p-6 text-center text-sm text-neutral-500">
-          No debt groups yet.
+        <div className="rounded-xl border border-dashed border-neutral-800 p-6 text-center flex flex-col items-center gap-2">
+          <CreditCard size={20} className="text-neutral-700" />
+          <span className="text-sm text-neutral-500">No debt groups yet.</span>
         </div>
       ) : (
         <div className="space-y-3">
