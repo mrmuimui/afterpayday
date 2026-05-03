@@ -261,8 +261,8 @@ export default function App() {
               <img src="/app-icon.png" alt="App Icon" className="w-full h-full object-cover" />
             </div>
             <div>
-              <div className="text-[11px] uppercase tracking-widest text-neutral-500">AfterPayday</div>
-              <div className="text-sm font-medium text-neutral-200">{monthLabel()}</div>
+              <div className="text-[10px] uppercase tracking-widest text-neutral-600">AfterPayday</div>
+              <div className="text-base font-semibold text-emerald-400">{monthLabel()}</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -489,8 +489,10 @@ function QuickAddDaily({ currency, onAdd }) {
   return (
     <div className="mt-5 rounded-2xl border border-neutral-800 bg-neutral-900/40 p-4">
       <div className="text-[11px] uppercase tracking-widest text-neutral-500 mb-3">Quick add expense</div>
-      <div className="flex gap-2">
-        <div className="relative w-32">
+
+      {/* Row 1: Amount + Description */}
+      <div className="flex gap-2 mb-2">
+        <div className="relative w-36 flex-shrink-0">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">{currency}</span>
           <input
             type="number"
@@ -498,25 +500,28 @@ function QuickAddDaily({ currency, onAdd }) {
             placeholder="0.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submit()}
             className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-sm focus:outline-none focus:border-emerald-500/50"
           />
         </div>
         <input
           type="text"
-          placeholder="Description"
+          placeholder="Description (optional)"
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
-          className="flex-1 px-3 py-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-sm focus:outline-none focus:border-emerald-500/50"
+          className="flex-1 min-w-0 px-3 py-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-sm focus:outline-none focus:border-emerald-500/50"
         />
-        <button
-          onClick={submit}
-          className="px-3 rounded-lg bg-emerald-500 text-neutral-950 font-medium hover:bg-emerald-400 active:bg-emerald-600 transition-colors"
-          aria-label="Add"
-        >
-          <Plus size={18} />
-        </button>
       </div>
+
+      {/* Row 2: Full-width Add button */}
+      <button
+        onClick={submit}
+        className="w-full py-2.5 rounded-lg bg-emerald-500 text-neutral-950 font-medium text-sm flex items-center justify-center gap-2 hover:bg-emerald-400 active:bg-emerald-600 transition-colors"
+      >
+        <Plus size={16} />
+        Add Expense
+      </button>
     </div>
   );
 }
