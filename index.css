@@ -4,6 +4,17 @@ html {
   background: #0a0a0a;
   overflow-x: hidden;
   overscroll-behavior-y: none;
+  touch-action: pan-y;              /* CSS-level zoom block, allows vertical scroll */
+  -webkit-overflow-scrolling: touch; /* Smooth momentum scrolling on iOS */
+}
+
+/* Hide scrollbars globally while keeping scroll functionality intact */
+* {
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE / legacy Edge */
+}
+*::-webkit-scrollbar {
+  display: none;                /* Chrome, Safari, modern Edge */
 }
 
 body {

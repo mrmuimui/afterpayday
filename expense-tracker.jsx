@@ -1420,19 +1420,33 @@ function ManualInstallmentForm({ currency, onCancel, onAdd }) {
 function SettingsSheet({ settings, onClose, onSave }) {
   const [salary, setSalary] = useState(String(settings.salary || ""));
   const [currency, setCurrency] = useState(settings.currency || "RM");
+  const [isClosing, setIsClosing] = useState(false);
+
+  const close = (callback) => {
+    setIsClosing(true);
+    setTimeout(callback, 280);
+  };
 
   const save = () => {
     const s = parseFloat(salary);
-    onSave({
+    close(() => onSave({
       salary: Number.isFinite(s) && s >= 0 ? s : 0,
       currency: currency.trim() || "RM",
-    });
+    }));
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-40 flex items-end justify-center"
+      style={{ animation: `${isClosing ? 'iosPickerFadeOut' : 'iosPickerFadeIn'} 0.28s ease forwards` }}
+      onClick={() => close(onClose)}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="w-full max-w-md rounded-t-2xl sm:rounded-2xl border border-neutral-800 bg-neutral-950 p-5"
+        className="relative w-full max-w-md rounded-t-2xl border-t border-neutral-700/50 bg-neutral-950 p-5"
+        style={{
+          animation: `${isClosing ? 'iosPickerSlideDown' : 'iosPickerSlideUp'} 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards`,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
@@ -1440,7 +1454,7 @@ function SettingsSheet({ settings, onClose, onSave }) {
             <div className="text-[11px] uppercase tracking-widest text-neutral-500">Settings</div>
             <div className="text-base font-medium text-neutral-100">Income & currency</div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg border border-neutral-800 flex items-center justify-center text-neutral-400 hover:bg-neutral-900">
+          <button onClick={() => close(onClose)} className="w-8 h-8 rounded-lg border border-neutral-800 flex items-center justify-center text-neutral-400 hover:bg-neutral-900">
             <X size={16} />
           </button>
         </div>
@@ -1473,6 +1487,13 @@ function SettingsSheet({ settings, onClose, onSave }) {
         >
           Save
         </button>
+
+        <style>{`
+          @keyframes iosPickerFadeIn { from { opacity: 0 } to { opacity: 1 } }
+          @keyframes iosPickerFadeOut { from { opacity: 1 } to { opacity: 0 } }
+          @keyframes iosPickerSlideUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
+          @keyframes iosPickerSlideDown { from { transform: translateY(0) } to { transform: translateY(100%) } }
+        `}</style>
       </div>
     </div>
   );
