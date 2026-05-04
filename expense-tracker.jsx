@@ -383,7 +383,17 @@ export default function App() {
     [state.fixedExpenses]
   );
 
-  const installmentsThisMonth = useMemo(() => {
+  const installmentsTotalThisMonth = useMemo(() => {
+    let total = 0;
+    state.debtGroups.forEach((g) => {
+      g.installments.forEach((i) => {
+        if (isInCurrentMonth(i.dueDate)) total += Number(i.amount || 0);
+      });
+    });
+    return total;
+  }, [state.debtGroups]);
+
+  const installmentsUnpaidThisMonth = useMemo(() => {
     let total = 0;
     state.debtGroups.forEach((g) => {
       g.installments.forEach((i) => {
@@ -402,7 +412,7 @@ export default function App() {
   );
 
   const safeToSpend =
-    Number(state.settings.salary || 0) - fixedTotal - installmentsThisMonth - dailyThisMonth;
+    Number(state.settings.salary || 0) - fixedGrandTotal - installmentsTotalThisMonth - dailyThisMonth;
 
   // ---------- mutations ----------
   const updateSettings = (patch) =>
@@ -534,7 +544,8 @@ export default function App() {
             salary={state.settings.salary}
             fixedTotal={fixedTotal}
             fixedGrandTotal={fixedGrandTotal}
-            installmentsThisMonth={installmentsThisMonth}
+            installmentsTotalThisMonth={installmentsTotalThisMonth}
+            installmentsUnpaidThisMonth={installmentsUnpaidThisMonth}
             dailyThisMonth={dailyThisMonth}
             safeToSpend={safeToSpend}
             dailyExpenses={state.dailyExpenses}
@@ -612,7 +623,8 @@ function Dashboard({
   salary,
   fixedTotal,
   fixedGrandTotal,
-  installmentsThisMonth,
+  installmentsTotalThisMonth,
+  installmentsUnpaidThisMonth,
   dailyThisMonth,
   safeToSpend,
   dailyExpenses,
@@ -649,8 +661,16 @@ function Dashboard({
 
         <div className="mt-5 grid grid-cols-2 gap-3 text-xs">
           <BreakdownItem label="Salary" value={formatMoney(salary, currency)} tone="positive" />
-          <BreakdownItem label="Fixed" value={`− ${formatMoney(fixedTotal, currency)}`} />
-          <BreakdownItem label="Installments" value={`− ${formatMoney(installmentsThisMonth, currency)}`} />
+          <BreakdownItem 
+            label="Fixed" 
+            value={`− ${formatMoney(fixedGrandTotal, currency)}`} 
+            subText={fixedTotal === 0 && fixedGrandTotal > 0 ? "All paid" : fixedGrandTotal > 0 ? `${formatMoney(fixedTotal, currency)} unpaid` : null} 
+          />
+          <BreakdownItem 
+            label="Installments" 
+            value={`− ${formatMoney(installmentsTotalThisMonth, currency)}`} 
+            subText={installmentsUnpaidThisMonth === 0 && installmentsTotalThisMonth > 0 ? "All paid" : installmentsTotalThisMonth > 0 ? `${formatMoney(installmentsUnpaidThisMonth, currency)} unpaid` : null} 
+          />
           <BreakdownItem label="Daily spent" value={`− ${formatMoney(dailyThisMonth, currency)}`} />
         </div>
       </div>
@@ -707,13 +727,14 @@ function Dashboard({
   );
 }
 
-function BreakdownItem({ label, value, tone }) {
+function BreakdownItem({ label, value, tone, subText }) {
   return (
-    <div className="rounded-lg bg-neutral-900/60 border border-neutral-800/60 px-3 py-2">
+    <div className="rounded-lg bg-neutral-900/60 border border-neutral-800/60 px-3 py-2 flex flex-col justify-center">
       <div className="text-[10px] uppercase tracking-wider text-neutral-500">{label}</div>
       <div className={`text-sm font-medium ${tone === "positive" ? "text-emerald-400" : "text-neutral-200"}`}>
         {value}
       </div>
+      {subText && <div className="text-[9px] mt-0.5 text-neutral-500">{subText}</div>}
     </div>
   );
 }
@@ -815,10 +836,19 @@ function FixedExpensesSection({ currency, items, total, unpaidTotal, onAdd, onRe
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
+  const [showAll, setShowAll] = useState(false);
 
   const paidCount = items.filter((e) => isFixedPaidThisMonth(e)).length;
   const totalCount = items.length;
   const progress = totalCount > 0 ? paidCount / totalCount : 0;
+
+  const PREVIEW_COUNT = 4;
+  const unpaidItems = items.filter((e) => !isFixedPaidThisMonth(e));
+  const visibleItems = showAll ? items : unpaidItems.slice(0, PREVIEW_COUNT);
+  const unpaidCount = totalCount - paidCount;
+  const hiddenUnpaid = Math.max(0, unpaidCount - PREVIEW_COUNT);
+  const hasMore = totalCount > PREVIEW_COUNT || paidCount > 0;
+  const hiddenTotal = totalCount - visibleItems.length;
 
   const submit = () => {
     const a = parseFloat(amount);
@@ -903,7 +933,7 @@ function FixedExpensesSection({ currency, items, total, unpaidTotal, onAdd, onRe
           )}
 
           <ul className="divide-y divide-neutral-800/70">
-            {items.map((e) => {
+            {visibleItems.map((e) => {
               const isPaid = isFixedPaidThisMonth(e);
               return (
                 <li key={e.id} className="flex items-center gap-3 px-4 py-3">
@@ -934,6 +964,17 @@ function FixedExpensesSection({ currency, items, total, unpaidTotal, onAdd, onRe
             })}
           </ul>
 
+          {hasMore && (
+            <button
+              onClick={() => setShowAll((v) => !v)}
+              className="w-full px-4 py-2 text-[11px] font-medium text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/30 transition-colors border-t border-neutral-800/70"
+            >
+              {showAll
+                ? "Show less"
+                : `Show ${hiddenTotal} more ${hiddenUnpaid > 0 ? `(${hiddenUnpaid} unpaid)` : ""}`}
+            </button>
+          )}
+
           <div className="flex items-center justify-between px-4 py-3 bg-neutral-900/70 border-t border-neutral-800/70">
             <span className="text-xs uppercase tracking-widest text-neutral-500">Unpaid</span>
             <div className="flex items-center gap-4">
@@ -957,7 +998,7 @@ function DebtSection({ currency, groups, onAddGroup, onRemoveGroup, onToggle, on
           <div className="w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center flex-shrink-0">
             <CreditCard size={13} className="text-rose-400" />
           </div>
-          <h2 className="text-base font-semibold text-neutral-200 tracking-tight">Short-term Debts</h2>
+          <h2 className="text-base font-semibold text-neutral-200 tracking-tight">Installment Debt</h2>
         </div>
         <button onClick={() => setCreating((v) => !v)} className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
           {creating ? <X size={14} /> : <Plus size={14} />}
