@@ -1,51 +1,50 @@
 import { useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import DatePickerField from "./DatePickerField.jsx";
-import { uid } from "../../utils/id.js";
-import { fmtMonthYear } from "../../utils/date.js";
+import { fmtMonthYear, todayISO } from "../../utils/date.js";
 import { formatMoney, splitEvenly } from "../../utils/money.js";
 import { generateInstallments } from "../../utils/debt.js";
 
-export default function NewDebtGroupForm({ currency, onCancel, onCreate }) {
-  const [mode, setMode] = useState("auto");
-  const [name, setName] = useState("");
-  const [total, setTotal] = useState("");
-  const [months, setMonths] = useState("");
+export default function EditDebtGroupForm({ currency, group, onCancel, onSave }) {
+  const [mode, setMode] = useState("keep");
+  const [name, setName] = useState(group.name ?? "");
   const [error, setError] = useState(null);
-  const [startDate, setStartDate] = useState(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  });
+
+  const currentTotal = group.installments.reduce((s, i) => s + Number(i.amount || 0), 0);
+  const firstDue = group.installments
+    .map((i) => i.dueDate)
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b))[0];
+
+  const [total, setTotal] = useState(currentTotal > 0 ? String(currentTotal) : "");
+  const [months, setMonths] = useState(group.installments.length ? String(group.installments.length) : "");
+  const [startDate, setStartDate] = useState(firstDue ?? todayISO());
 
   const submit = () => {
     setError(null);
     if (!name.trim()) return;
-    if (mode === "auto") {
-      const t = parseFloat(total);
-      const n = parseInt(months, 10);
-      if (!Number.isFinite(t) || t <= 0 || !Number.isFinite(n) || n <= 0) return;
-      if (n > 600) {
-        setError("Maximum allowed duration is 600 months (50 years).");
-        return;
-      }
-      // Split the total so the installments always sum back to it exactly —
-      // the last one absorbs any rounding remainder.
-      const installments = generateInstallments(t, n, startDate);
-      onCreate({ id: uid(), name: name.trim(), installments });
-    } else {
-      onCreate({ id: uid(), name: name.trim(), installments: [] });
+    if (mode === "keep") {
+      onSave({ name: name.trim() });
+      return;
     }
+    const t = parseFloat(total);
+    const n = parseInt(months, 10);
+    if (!Number.isFinite(t) || t <= 0 || !Number.isFinite(n) || n <= 0 || !startDate) return;
+    if (n > 600) {
+      setError("Maximum allowed duration is 600 months (50 years).");
+      return;
+    }
+    onSave({ name: name.trim(), installments: generateInstallments(t, n, startDate) });
   };
 
   const previewT = parseFloat(total);
   const previewN = parseInt(months, 10);
   const showPreview =
-    mode === "auto" &&
+    mode === "regenerate" &&
     Number.isFinite(previewT) && previewT > 0 &&
     Number.isFinite(previewN) && previewN > 0 && previewN <= 600;
   let previewText = null;
   if (showPreview) {
-    // Show the same rounded per-month figure the installments will actually
-    // use (splitEvenly's base), so the preview can't be a cent off the rows.
     const per = splitEvenly(previewT, previewN)[0];
     const [yy, mm] = startDate.split("-").map(Number);
     const end = new Date(yy, mm - 1 + (previewN - 1), 1);
@@ -53,16 +52,7 @@ export default function NewDebtGroupForm({ currency, onCancel, onCreate }) {
   }
 
   return (
-    <div className="glass" style={{ padding: "14px", marginBottom: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-      <div className="seg">
-        <button className={mode === "auto" ? "on" : ""} onClick={() => setMode("auto")}>
-          Auto-generate
-        </button>
-        <button className={mode === "manual" ? "on" : ""} onClick={() => setMode("manual")}>
-          Manual
-        </button>
-      </div>
-
+    <div className="glass" style={{ padding: "14px", marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
       <input
         type="text"
         placeholder="Installment (e.g., Car, House, Gadget...)"
@@ -72,7 +62,16 @@ export default function NewDebtGroupForm({ currency, onCancel, onCreate }) {
         className="glass-input"
       />
 
-      {mode === "auto" && (
+      <div className="seg">
+        <button className={mode === "keep" ? "on" : ""} onClick={() => setMode("keep")}>
+          Keep installments
+        </button>
+        <button className={mode === "regenerate" ? "on" : ""} onClick={() => setMode("regenerate")}>
+          Regenerate schedule
+        </button>
+      </div>
+
+      {mode === "regenerate" && (
         <>
           <div style={{ display: "flex", gap: 8 }}>
             <div style={{ position: "relative", flex: 1 }}>
@@ -110,6 +109,18 @@ export default function NewDebtGroupForm({ currency, onCancel, onCreate }) {
             </div>
           </div>
           {previewText && <div className="preview">{previewText}</div>}
+          <div
+            role="alert"
+            style={{
+              display: "flex", alignItems: "flex-start", gap: 8,
+              padding: "10px 12px", borderRadius: 12,
+              background: "rgba(251,191,36,0.10)", border: "1px solid rgba(251,191,36,0.28)",
+              font: "500 12px var(--font)", color: "var(--amber, #fbbf24)", lineHeight: 1.5,
+            }}
+          >
+            <AlertTriangle size={15} strokeWidth={1.75} style={{ flexShrink: 0, marginTop: 1 }} />
+            <span>Regenerating replaces all installments and resets their paid status.</span>
+          </div>
           {error && (
             <div
               role="alert"
@@ -129,15 +140,9 @@ export default function NewDebtGroupForm({ currency, onCancel, onCreate }) {
         </>
       )}
 
-      {mode === "manual" && (
-        <p style={{ font: "500 12px var(--font)", color: "var(--fg-3)", margin: 0, lineHeight: 1.5 }}>
-          Create the group, then add each installment with custom amounts and due dates.
-        </p>
-      )}
-
       <div style={{ display: "flex", gap: 8 }}>
         <button onClick={onCancel} className="glass-btn-secondary" style={{ flex: 1 }}>Cancel</button>
-        <button onClick={submit} className="glass-btn-primary" style={{ flex: 1 }}>Confirm</button>
+        <button onClick={submit} className="glass-btn-primary" style={{ flex: 1 }}>Save</button>
       </div>
     </div>
   );
